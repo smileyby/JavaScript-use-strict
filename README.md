@@ -318,7 +318,7 @@ privilegedInvoker();
 
 ```
 
-第三，严格模式下的arguments不会再提供访问与调用这个函数相关的变量的途径。在一些旧时的ECMAScript实现中arguments.caller曾经是一个对象，里面存储的属性指向那个函数的变量。这是一个安全隐患，因为它通过函数抽象打破了本来被隐藏起来的保留值；它同时也是引起大量优化工作的原因。出于这些原因，现在的浏览器没有实现它。但是因为它这种历史遗留的功能，arguments.caller在严格模式下同样是一个不可被删除的属性，在赋值或者取值时会报错：
+第三，严格模式下的arguments不会再提供访问与调用这个函数相关的变量的途径。在一些旧时的ECMAScript实现中arguments.caller曾经是一个对象，里面存储的属性指向那个函数的变量。这是一个[安全隐患](http://stuff.mit.edu/iap/2008/facebook/)，因为它通过函数抽象打破了本来被隐藏起来的保留值；它同时也是引起大量优化工作的原因。出于这些原因，现在的浏览器没有实现它。但是因为它这种历史遗留的功能，arguments.caller在严格模式下同样是一个不可被删除的属性，在赋值或者取值时会报错：
 
 ```js
 
@@ -333,9 +333,63 @@ fun(1, 2); // 不会暴露v（或者a，或者b）
 
 ```
 
-## 为未来的ECMAScript版本铺平道路
+## 为未来的ECMAScript版本铺平道路 （）
 
-未完待续。。。
+未来版本的ECMAScript很可能会引入新的语法，ECMAScript5中的严格模式早就设置了一些限制来减轻之后版本改变产生的影响。如果提早使用了严格模式中的保护机制，那么做出改变就会更容易。
+
+首先，在严格模式中一部分字符变成保留关键字。这些字符包括implements,interface,let,package,private,protected,public,static和yield。在严格模式下，你不能再用这些名字做变量名或者形参。
+
+```js
+
+function package(protected) { // !!!
+	"use strict";
+	var implements; // !!!
+	
+	interface; // !!!
+	while (true)
+	{
+		break interface; // !!!
+	}
+	
+	function private() { }; // !!!
+}
+
+function fun(static) { "use strict"; } // !!!
+
+```
+
+两个针对Mozilla开发的警告：第一，如果你的javascript版本在1.7及以上（你的chrome代码或者你正确使用了<script type="">）并且开启了严格模式的话，因为left和yield是最先引入的关键字，所以他们会起作用。但是在网络商用<script src="">或者<script>...<script>加载的代码，let和yield都不会作为关键字起作用。第二，尽管ES5无条件的保留了class.enum,export,extends,import和super关键字，在Firefox 5之前，Mozilla仅仅在严格模式中保留了他们。
+
+其次，[严格模式禁止了在脚本或者函数层面上的函数声明](http://whereswalden.com/2011/01/24/new-es5-strict-mode-requirement-function-statements-not-at-top-level-of-a-program-or-function-are-prohibited/)。在浏览器的普通代码中，在“所有地方”的函数声明都是合法的。这并不在ES5规范中（甚至ES3）！这是一种针对不同浏览器中不同语义的一种延伸。未来的ECMAScript版本很有希望指定一个新的，针对不在脚本或者函数层面进行函数声明的与发起。[在严格模式下禁止这样额函数声明](http://wiki.ecmascript.org/doku.php?id=conventions:no_non_standard_strict_decls)对于将来ECMAScript版本的推出骚情了障碍。
+
+```js
+
+// 经测试并不会爆语法错误（Chrome和Firefox）
+"use strict";
+if (true){
+	function f() { } // !!! 语法错误
+	f();
+}
+
+for (var i = 0; i < 5; i++){
+	function f2() { } // !!! 语法错误
+	f2();
+}
+
+function baz() {
+	function eit() { } // 同样合法
+}
+
+```
+
+## 浏览器的严格模式
+
+主流浏览器现在实现了严格模式。但不要盲目的依赖它，因为市场上仍然有大量的浏览器版本只部分支持严格模式或者根本就不支持严格模式（比如IE10之前的版本）。严格模式改变了语义。依赖这些改变可能会导致没有实现严格模式的浏览器中出现问题或者错误。谨慎使用严格模式，通过检测相关代码的功能保证严格模式不出问题。最后，记得在支持或者不支持严格模式的浏览器中测试你的代码。如果你只在不支持严格模式的浏览器中测试，那么支持的浏览器中就很有可能呼出问题，反之亦然。
+
+*上述所有测试用例代码，部分在严格模式下并不会报错，使用时请以真实效果为准！！！*
+
+
+
 
 参考链接： https://developer.mozilla.org/zh-CN/docs/Web/JavaScript/Reference/Strict_mode
 
